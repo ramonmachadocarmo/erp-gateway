@@ -134,12 +134,12 @@ func (h *Handler) authenticate(c *gin.Context) (*rbac.Claims, bool) {
 		httpserver.Error(c, http.StatusUnauthorized, domain.ErrUnauthorized)
 		return nil, false
 	}
-	if !claims.IsMaster() {
-		n, err := h.redis.Exists(c.Request.Context(), rbac.SessionKey(claims.SessionID)).Result()
-		if err != nil || n == 0 {
-			httpserver.Error(c, http.StatusUnauthorized, domain.ErrSessionRevoked)
-			return nil, false
-		}
+	// Every role — MASTER included — needs a live session, so logout / a revoked or reused
+	// refresh token cuts access off within the access token's short lifetime at most.
+	n, err := h.redis.Exists(c.Request.Context(), rbac.SessionKey(claims.SessionID)).Result()
+	if err != nil || n == 0 {
+		httpserver.Error(c, http.StatusUnauthorized, domain.ErrSessionRevoked)
+		return nil, false
 	}
 	return claims, true
 }

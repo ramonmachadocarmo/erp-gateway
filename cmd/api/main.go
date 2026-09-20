@@ -26,7 +26,7 @@ func main() {
 	routes := []domain.Route{
 		{
 			Name: "identity", Prefix: "/api/identity", Target: env("IDENTITY_BASE_URL", "http://localhost:8080"),
-			Public:   []string{"/auth/login", "/auth/register"},
+			Public:   []string{"/auth/login", "/auth/register", "/auth/refresh"},
 			AuthOnly: []string{"/auth/me", "/auth/logout"},
 		},
 		{
