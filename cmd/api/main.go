@@ -29,7 +29,17 @@ func main() {
 			Public:   []string{"/auth/login", "/auth/register"},
 			AuthOnly: []string{"/auth/me", "/auth/logout"},
 		},
-		{Name: "config", Prefix: "/api/config", Target: env("CONFIG_BASE_URL", "http://localhost:8085")},
+		{
+			Name: "config", Prefix: "/api/config", Target: env("CONFIG_BASE_URL", "http://localhost:8085"),
+			// Sales registers customers (and their addresses) while taking orders,
+			// purchasing does the same for suppliers.
+			Grants: []domain.Grant{
+				{PathPrefix: "/customers", Module: "sales"},
+				{PathPrefix: "/suppliers", Module: "purchasing"},
+				{PathPrefix: "/cep", Module: "sales"},
+				{PathPrefix: "/cep", Module: "purchasing"},
+			},
+		},
 		{Name: "stock", Prefix: "/api/stock", Target: env("STOCK_BASE_URL", "http://localhost:8081")},
 		{Name: "sales", Prefix: "/api/sales", Target: env("SALES_BASE_URL", "http://localhost:8082")},
 		{Name: "purchasing", Prefix: "/api/purchasing", Target: env("PURCHASING_BASE_URL", "http://localhost:8083")},

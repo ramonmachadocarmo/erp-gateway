@@ -87,7 +87,7 @@ func (h *Handler) dispatch(c *gin.Context) {
 		if !ok {
 			return
 		}
-		if !contains(route.AuthOnly, rest) && !h.authorize(c, claims, route.Name) {
+		if !contains(route.AuthOnly, rest) && !h.authorize(c, claims, route.ModulesFor(rest)...) {
 			return
 		}
 	}
@@ -144,15 +144,19 @@ func (h *Handler) authenticate(c *gin.Context) (*rbac.Claims, bool) {
 	return claims, true
 }
 
-func (h *Handler) authorize(c *gin.Context, claims *rbac.Claims, module string) bool {
+// authorize passes when the caller holds the needed level in any of modules.
+func (h *Handler) authorize(c *gin.Context, claims *rbac.Claims, modules ...string) bool {
 	if claims.IsMaster() {
 		return true
 	}
-	if claims.Modules[module] < rbac.RequiredLevel(c.Request.Method) {
-		httpserver.Error(c, http.StatusForbidden, domain.ErrForbidden)
-		return false
+	need := rbac.RequiredLevel(c.Request.Method)
+	for _, m := range modules {
+		if claims.Modules[m] >= need {
+			return true
+		}
 	}
-	return true
+	httpserver.Error(c, http.StatusForbidden, domain.ErrForbidden)
+	return false
 }
 
 func (h *Handler) listAuditLogs(c *gin.Context) {

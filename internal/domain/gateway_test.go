@@ -30,3 +30,28 @@ func TestMatch(t *testing.T) {
 		t.Fatalf("want not found, got %v", err)
 	}
 }
+
+func TestModulesForGrants(t *testing.T) {
+	r := Route{Name: "config", Grants: []Grant{
+		{PathPrefix: "/customers", Module: "sales"},
+		{PathPrefix: "/suppliers", Module: "purchasing"},
+	}}
+	if got := r.ModulesFor("/suppliers/7"); len(got) != 2 || got[1] != "purchasing" {
+		t.Fatalf("suppliers should also accept purchasing, got %v", got)
+	}
+	if got := r.ModulesFor("/customers/42"); len(got) != 2 || got[1] != "sales" {
+		t.Fatalf("customers must not pick up purchasing, got %v", got)
+	}
+	if got := r.ModulesFor("/customers/42"); len(got) != 2 || got[1] != "sales" {
+		t.Fatalf("customers should also accept sales, got %v", got)
+	}
+	if got := r.ModulesFor("/customers"); len(got) != 2 {
+		t.Fatalf("exact prefix should match, got %v", got)
+	}
+	if got := r.ModulesFor("/customers-archive"); len(got) != 1 {
+		t.Fatalf("prefix must match whole segments, got %v", got)
+	}
+	if got := r.ModulesFor("/units"); len(got) != 1 || got[0] != "config" {
+		t.Fatalf("other paths stay config-only, got %v", got)
+	}
+}
